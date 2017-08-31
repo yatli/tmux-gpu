@@ -6,64 +6,30 @@
 const sp = require('child_process');
 
 // width of GPU usage
-const gpu_width = 10;
+const gpu_width = 5;
 const pci_width = 3;
-const temp_width = 1;
+const pwr_width = 2;
 const ram_width = 3;
 
 // get the nvidia gpu ids installed
-var gpus = sp.spawnSync("/usr/bin/nvidia-settings", ["-t", "-q", "gpus"]);
+var gpus = sp.spawnSync("nvidia-smi", ["--query-gpu=utilization.memory,utilization.gpu,power.draw,power.limit,memory.total,memory.used", "--format=csv,noheader,nounits"]);
 var output = gpus.stdout.toString();
-output = output.replace(/^\s+|\s+$/g, '');
 var lines = output.split("\n");
-// find lines which contain the pattern [digit]
-var search = [];
-lines.forEach(function(str){
-    if (/\[[0-9]+\]/.test(str))
-        search.push(str);
-});
-// search for the actual gpu ids, e.g.: `[gpu:0]`
-var gpu_ids = [];
-search.forEach(function(str){
-    var id = str.substring(str.lastIndexOf("["),str.lastIndexOf("]")+1);
-    gpu_ids.push(id);
-});
 
-// [0] = gpu_use, [1] PCIe bandwidth, [2] Core temp, [3] ram use
 var averages = [0, 0, 0, 0];
 var devices = 0;
 
 // for each gpu installed we'll query usage, temp and memory usage
-gpu_ids.forEach(function(id){
-    // query gpu usage
-    var query = sp.spawnSync("/usr/bin/nvidia-settings", ["-t", "-q", id+"/GPUUtilization"]);
-    var out = query.stdout.toString();
-    out = out.replace(/^\s+|\s+$/g, '');
-    var gpu_use = (out.match(/graphics=\d?\d/g)[0]).replace('graphics=', '');
-    var ram_use = (out.match(/memory=\d?\d/g)[0]).replace('memory=', '');
-    var pci_use = (out.match(/PCIe=\d?\d/g)[0]).replace('PCIe=', '');
-    averages[0] += parseFloat(gpu_use);
-    averages[1] += parseFloat(pci_use);
+lines.forEach(function(str){
+    // [0] = ram util, [1] gpu util, [2] pwr draw, [3] pwr limit, [4] mem total [5] mem used
+    var values = str.split(",");
+    if(values.length != 6) return
 
-    // query gpu temp
-    var query = sp.spawnSync("/usr/bin/nvidia-settings", ["-t", "-q", id+"/GPUCoreTemp"]);
-    out = query.stdout.toString();
-    out = out.replace(/^\s+|\s+$/g, '');
-    averages[2] += parseFloat(out);
+    averages[0] += parseFloat(values[1]);
+    averages[1] += parseFloat(values[0]);
+    averages[2] += parseFloat(values[2]) / parseFloat(values[3]);
+    averages[3] += parseFloat(values[5]) / parseFloat(values[4]);
 
-    // query gpu used memory
-    var query = sp.spawnSync("/usr/bin/nvidia-settings", ["-t", "-q", id+"/UsedDedicatedGPUMemory"]);
-    out = query.stdout.toString();
-    var used_mem = out.replace(/^\s+|\s+$/g, '');
-
-    // query gpu total memory
-    var query = sp.spawnSync("/usr/bin/nvidia-settings", ["-t", "-q", id+"/TotalDedicatedGPUMemory"]);
-    out = query.stdout.toString();
-    var total_mem = out.replace(/^\s+|\s+$/g, '');
-
-    // min-max norm ram usage
-    var norm = (used_mem - 0) / (total_mem - 0);
-    averages[3] += parseFloat(norm)*100;
     devices++;
 });
 
@@ -98,7 +64,7 @@ fs.access('.gpu.tmp', fs.F_OK, function(err) {
             history[0][i] = parseFloat(0);
         for (var i=0; i<pci_width; i++)
             history[1][i] = parseFloat(0);
-        for (var i=0; i<temp_width; i++)
+        for (var i=0; i<pwr_width; i++)
             history[2][i] = parseFloat(0);
         for (var i=0; i<ram_width; i++)
             history[3][i] = parseFloat(0);
@@ -114,18 +80,13 @@ function print_graphs()
         history[i].shift();
         history[i].push(averages[i]);
         for (var k=0; k<history[i].length; k++){
-            if (i !== 2){
-                var x = parseInt((((history[i][k] - 0) * (8 - 1)) / (100 - 0)) + 1);
-                text[i] += bars[x];
-           }
-            else {
-                var x = parseInt((((history[i][k] - 30) * (8 - 1)) / (100 - 30)) + 1);
-                text[i] += bars[x];
-            }
+            var x = parseInt((((history[i][k] - 0) * (8 - 1)) / (100 - 0)) + 1);
+            text[i] += bars[x];
         }
     }
 
     var colors = require('tmux-colors');
+    process.stdout.write("GPU " + averages[1].toFixed() + "% "+averages[0].toFixed() + "% ")
     process.stdout.write(colors('#[fg=green,bold]'+text[0]+'#[fg=cyan,bold]'+text[1]
                          +'#[fg=red,bold]'+text[2]+'#[fg=yellow,bold]'+text[3]
                          +'#[default]'));
