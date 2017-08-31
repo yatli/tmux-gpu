@@ -35,7 +35,7 @@ lines.forEach(function(str){
 
 // 8ths 
 var bars = [ '\u2581','\u2582','\u2583','\u2584',
-             '\u2585','\u2586','\u2587','\u2588'];
+             '\u2585','\u2586','\u2587','\u2588','\u2588'];
 
 // all previous history
 var history_records = [];
@@ -107,10 +107,11 @@ function print_graphs(gpu_id)
     }
 
     var colors = require('tmux-colors');
-    process.stdout.write(" GPU" + gpu_id +" " + s[1].toFixed() + "% "+s[0].toFixed() + "% ")
+    process.stdout.write(" #[fg=red,bold,bg=white]GPU" + gpu_id +" " + s[0].toFixed() + "% "+s[1].toFixed() + "% ")
     process.stdout.write(colors('#[fg=green,bold]'+text[0]+'#[fg=cyan,bold]'+text[1]
                          +'#[fg=red,bold]'+text[2]+'#[fg=yellow,bold]'+text[3]
-                         +'#[default]'));
+    ));
+                         //+'#[default]'));
 }
 
 //console.log(samples);
