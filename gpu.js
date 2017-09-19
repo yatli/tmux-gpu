@@ -14,6 +14,7 @@ const ram_width = 3;
 // get the nvidia gpu ids installed
 var gpus = sp.spawnSync("nvidia-smi", ["--query-gpu=utilization.memory,utilization.gpu,power.draw,power.limit,memory.total,memory.used", "--format=csv,noheader,nounits"]);
 var output = gpus.stdout.toString();
+//console.log(output)
 var lines = output.split("\n");
 
 var samples = [[0, 0, 0, 0], [0, 0, 0, 0]];
@@ -45,18 +46,18 @@ for(var i=0;i<devices;++i)
 }
 const fs = require('fs');
 var contents;
-
+var filename = '~/.gpu.tmp'
 // load previous samples from file
-fs.access('.gpu.tmp', fs.F_OK, function(err) {
+fs.access(filename, fs.F_OK, function(err) {
     if (!err) {
-        if (contents = fs.readFileSync('.gpu.tmp', 'utf8')){
+        if (contents = fs.readFileSync(filename, 'utf8')){
             history_records = JSON.parse(contents);
             for(var i=0;i<devices;++i)
             {
                 print_graphs(i);
             }
             // write computed samples to file
-            fs.writeFile('.gpu.tmp', JSON.stringify(history_records), function (err){
+            fs.writeFile(filename, JSON.stringify(history_records), function (err){
                 if (err){ console.error('cannot write tmp file');}
             });
         }
@@ -82,7 +83,7 @@ fs.access('.gpu.tmp', fs.F_OK, function(err) {
         }
 
         // write computed samples to file
-        fs.writeFile('.gpu.tmp', JSON.stringify(history_records), function (err){
+        fs.writeFile(filename, JSON.stringify(history_records), function (err){
             if (err){ console.error('cannot write tmp file');}
         });
         //
