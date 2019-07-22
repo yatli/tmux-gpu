@@ -1,0 +1,28 @@
+{
+  "name": "tmux-gpu",
+  "version": "1.0.0",
+  "description": "Displays historical GPU utilization info.",
+  "main": "gpu.js",
+  "dependencies": {
+    "tmux-colors": "^0.0.2"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yatli/tmux-gpu.git"
+  },
+  "keywords": [
+    "gpu",
+    "tmux",
+    "cuda"
+  ],
+  "author": "Yatao Li",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/yatli/tmux-gpu/issues"
+  },
+  "homepage": "https://github.com/yatli/tmux-gpu#readme"
+}

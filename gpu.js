@@ -1,4 +1,3 @@
-#!/usr/bin/node
 ///
 /// Node.js script which gets the nvidia GPU usage, free memory and temp
 /// and displays it as in your tmux status bar.
