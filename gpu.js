@@ -19,8 +19,11 @@ const filename = path.join(os.homedir(), '.gpu.tmp');
 // get the nvidia gpu ids installed
 var gpus = sp.spawnSync("nvidia-smi", ["--query-gpu=utilization.memory,utilization.gpu,power.draw,power.limit,memory.total,memory.used", "--format=csv,noheader,nounits"]);
 var output = gpus.stdout.toString();
-//console.log(output)
 var lines = output.split("\n");
+
+while(lines.length > 0 && lines[lines.length-1] === "") {
+  lines.pop();
+}
 
 var samples = new Array(lines.length);
 var devices = 0;
@@ -57,6 +60,9 @@ fs.access(filename, fs.F_OK, function (err) {
         contents = null
       }
     }
+  }
+  if (!Array.isArray(contents) || contents.length === 0) {
+    contents = null;
   }
   if (!contents) {
     contents = [];
